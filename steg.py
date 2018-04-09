@@ -24,7 +24,7 @@ def combine(header_size, secret_data, image, stego):
         stego: (string) File path of new stego file.
 
     Examples:
-        >>> combine(data, image, 'stego.png')
+        >>> combine(data, image, 'stego.jpg')
 
     """
     pixels = image.load()
@@ -48,6 +48,7 @@ def combine(header_size, secret_data, image, stego):
         pixels[x, y] = (r, modified_g, b)
 
     print('Creating stego image:', stego)
+    image.show()
     image.save(stego)
 
 def extract(header_size, stego, recovered_secrets):
