@@ -2,7 +2,7 @@ import sys
 from utils import *
 
 def help():
-    print("Usage: steg [path to secretr image] [path to cover image]")
+    print("Usage: steg [path to secret image] [path to cover image]")
 
 def validate_input():
     """
@@ -40,20 +40,15 @@ def combine(secret_image, cover_image, stego_name):
 
             # Merge bits
             bit_mask = 0b11110000
-            # r = (c_r & bit_mask) | (s_r >> 4)
-            # g = (c_g & bit_mask) | (s_g >> 4)
-            # b = (c_b & bit_mask) | (s_b >> 4)
-
-            # This works as does extract
-            r = (s_r >> 4)
-            g = (s_g >> 4)
-            b = (s_b >> 4)
+            r = (c_r & bit_mask) | (s_r >> 4)
+            g = (c_g & bit_mask) | (s_g >> 4)
+            b = (c_b & bit_mask) | (s_b >> 4)
 
             # Write pixel
             stego.putpixel((x, y), (r, g, b))
 
     print('Creating stego image:', stego_name)
-    stego.save(stego_name, "JPEG")
+    stego.save(stego_name, "JPEG", quality=100)
 
 def extract(stego_name, secret_name):
     """
@@ -71,7 +66,7 @@ def extract(stego_name, secret_name):
     width, height = stego.size
 
     # Create new image to store secret image
-    secret = Image.new('RGB', stego.size)
+    secret = Image.new(stego.mode, stego.size)
 
     # Extract secret image from stego image
     for x in range(width):
