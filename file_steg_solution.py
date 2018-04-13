@@ -3,7 +3,7 @@ import sys
 from utils import *
 
 def help():
-    print("Usage: steg [path to text file] [path to image]")
+    print("Usage: python3 file_steg.py [path to text file] [path to image]")
 
 def validate_input():
     """
@@ -14,21 +14,23 @@ def validate_input():
         help()
         sys.exit()
 
-def combine(header_size, secret_data, image, stego):
+    return sys.argv[1], sys.argv[2]
+
+def combine(header_size, secret_data, cover_image, stego_name):
     """
     Store secret data in an image and store the new file.
 
     Args:
+        header_size (integer): The number of bits to use as a header.
         secret_data (bytes): The bytes array to hide.
-        image: (image) The cover image.
+        cover_image: (image) The cover image.
         stego: (string) File path of new stego file.
 
     Examples:
-        >>> combine(data, image, 'stego.jpg')
+        >>> combine(24, data, image, 'stego.png')
 
     """
-    pixels = image.load()
-    width, height = image.size
+    width, height = cover_image.size
 
     # Number of bytes * 8 bits in a byte
     secret_data_size = len(secret_data * 8)
@@ -36,34 +38,35 @@ def combine(header_size, secret_data, image, stego):
     # Header size header_size bits
     for i in range(header_size):
         x, y = get_pixel_coordinates(i, width)
-        r, g, b = image.getpixel((x, y))
+        r, g, b, _ = cover_image.getpixel((x, y))
         modified_g = set_lsb(g, get_bit_from_byte(secret_data_size, i))
-        pixels[x, y] = (r, modified_g, b)
+        cover_image.putpixel((x, y), (r, modified_g, b))
 
     # Hide secret data in image
     for i in range(secret_data_size):
         x, y = get_pixel_coordinates(i + header_size, width)
-        r, g, b = image.getpixel((x, y))
+        r, g, b, _ = cover_image.getpixel((x, y))
         modified_g = set_lsb(g,  get_bit_from_byte_array(secret_data, i))
-        pixels[x, y] = (r, modified_g, b)
+        cover_image.putpixel((x, y), (r, modified_g, b))
 
-    print('Creating stego image:', stego)
-    image.show()
-    image.save(stego)
+    print('Creating stego image:', stego_name)
+    # cover_image.show()
+    cover_image.save(stego_name, 'PNG')
 
-def extract(header_size, stego, recovered_secrets):
+def extract(header_size, stego_name, recovered_secrets_name):
     """
     Extract the secret data from the stego image.
 
     Args:
+        header_size (integer): The number of bits that has been used as a header.
         stego (image): The stego image with the secret data.
         recovered_secrets: (string) File path of recovered secrets.
 
     Examples:
-        >>> extract(stego, 'recoveredSecretTextFile.txt')
+        >>> extract(24, stego, 'recoveredSecretTextFile.txt')
 
     """
-    pixels = read_image_file(stego).load()
+    stego = read_image_file(stego_name)
     width, height = image.size
 
     secret_data_size = 0
@@ -71,7 +74,7 @@ def extract(header_size, stego, recovered_secrets):
     # Header size header_size bits
     for i in range(header_size):
         x, y = get_pixel_coordinates(i, width)
-        r, g, b = image.getpixel((x, y))
+        r, g, b, _ = stego.getpixel((x, y))
         secret_data_size = set_bit(secret_data_size, get_bit_from_byte(g, 0), i)
 
     data_bytes = []
@@ -81,7 +84,7 @@ def extract(header_size, stego, recovered_secrets):
     # Extract the secret data
     for i in range(secret_data_size):
         x, y = get_pixel_coordinates(i + header_size, width)
-        r, g, b = image.getpixel((x, y))
+        r, g, b, _ = stego.getpixel((x, y))
         data_byte = set_bit(data_byte, get_bit_from_byte(g, 0), data_bit)
         data_bit += 1
         if data_bit == 8:
@@ -89,25 +92,23 @@ def extract(header_size, stego, recovered_secrets):
             data_bit = 0
             data_byte = 0
 
-    print('Extracting secret data to:', recovered_secrets)
-    write_text_file(bytes(data_bytes), recovered_secrets)
+    print('Extracting secret data to:', recovered_secrets_name)
+    write_text_file(bytes(data_bytes), recovered_secrets_name)
 
 # Script entry
-validate_input()
-text_file = sys.argv[1]
-image_file = sys.argv[2]
+text_file_name, image_file_name = validate_input()
 
 # Read the file to hide
-secret_data = read_text_file(text_file)
+secret_data = read_text_file(text_file_name)
 
 # Read the cover image
-image = read_image_file(image_file)
+image = read_image_file(image_file_name)
 
 # Header size
 header_size = 24
 
 # Create the stego image
-combine(header_size, secret_data, image, 'generated/stego.jpg')
+combine(header_size, secret_data, image, 'generated/stego_hiding_file.png')
 
 # Extract the secret text from the stego image
-extract(header_size, 'generated/stego.jpg', 'generated/recoveredSecretTextFile.txt')
+extract(header_size, 'generated/stego_hiding_file.png', 'generated/secret_file.txt')

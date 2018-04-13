@@ -1,9 +1,0 @@
-
-Push an empty generated folder
-Show image using Image show
-Remove pixel maps
-Remove code from combine, replace with helpful commnets, keep for loop
-Add code in sh, to show how much code was recovered, wc filename
-Challenge 0 - Find hidden image in stego provided
-Challenge 1 - compression
-Challenge 2 - 2 LSB bits

@@ -2,7 +2,7 @@ import sys
 from utils import *
 
 def help():
-    print("Usage: steg [path to secret image] [path to cover image]")
+    print("Usage: python3 image_steg.py [path to secret image] [path to cover image]")
 
 def validate_input():
     """
@@ -13,9 +13,11 @@ def validate_input():
         help()
         sys.exit()
 
+    return sys.argv[1], sys.argv[2]
+
 def combine(secret_image, cover_image, stego_name):
     """
-    Store secret data in an image and store the new file.
+    Store secret image in a cover image and store the stego image.
 
     Args:
         secret_image (image): The secret image.
@@ -23,20 +25,20 @@ def combine(secret_image, cover_image, stego_name):
         stego_name: (string) File path of new stego image.
 
     Examples:
-        >>> combine(secret_image, cover_image, 'stego.jpg')
+        >>> combine(secret_image, cover_image, 'stego.png')
 
     """
     width, height = secret_image.size
-    stego = Image.new('RGB', secret_image.size)
+    stego = Image.new('RGBA', secret_image.size)
 
     # Hide secret image in cover image
     for x in range(width):
         for y in range(height):
 
             # Cover image colour values
-            c_r, c_g, c_b = cover_image.getpixel((x, y))
+            c_r, c_g, c_b, _ = cover_image.getpixel((x, y))
             # Secret image colour values
-            s_r, s_g, s_b = secret_image.getpixel((x, y))
+            s_r, s_g, s_b, _ = secret_image.getpixel((x, y))
 
             # Merge bits
             bit_mask = 0b11110000
@@ -48,18 +50,19 @@ def combine(secret_image, cover_image, stego_name):
             stego.putpixel((x, y), (r, g, b))
 
     print('Creating stego image:', stego_name)
-    stego.save(stego_name, "JPEG", quality=100)
+    stego.show()
+    stego.save(stego_name, 'PNG')
 
 def extract(stego_name, secret_name):
     """
     Extract the secret image from the stego image.
 
     Args:
-        stego_image (string): File path of stego image with the secret image hidden.
+        stego_image (string): File path of stego image.
         secret_name: (string) File path of recovered image.
 
     Examples:
-        >>> extract('stego_hiding_image.jpg', 'secret_image.jpg')
+        >>> extract('stego_hiding_image.png', 'secret_image.png')
 
     """
     stego = read_image_file(stego_name)
@@ -73,7 +76,7 @@ def extract(stego_name, secret_name):
         for y in range(height):
 
             # Get pixel at x, y co-ordinates
-            stego_r, stego_g, stego_b = stego.getpixel((x, y))
+            stego_r, stego_g, stego_b, a = stego.getpixel((x, y))
 
             # Extract secret pixel from last 4 bits
             bit_mask = 0b00001111
@@ -85,12 +88,11 @@ def extract(stego_name, secret_name):
             secret.putpixel((x, y), (r, g, b))
 
     print('Extracting secret image to:', secret_name)
-    secret.save(secret_name, "JPEG")
+    secret.show()
+    secret.save(secret_name, 'PNG')
 
 # Script entry
-validate_input()
-secret_image_name = sys.argv[1]
-cover_image_name = sys.argv[2]
+secret_image_name, cover_image_name = validate_input()
 
 # Read the secret image
 secret_image = read_image_file(secret_image_name)
@@ -99,7 +101,7 @@ secret_image = read_image_file(secret_image_name)
 cover_image = read_image_file(cover_image_name)
 
 # Create the stego image
-combine(secret_image, cover_image, 'generated/stego_hiding_image.jpg')
+combine(secret_image, cover_image, 'generated/stego_hiding_image.png')
 
 # Extract the secret image from the stego image
-extract('generated/stego_hiding_image.jpg', 'generated/secret_image.jpg')
+extract('generated/stego_hiding_image.png', 'generated/secret_image.png')
