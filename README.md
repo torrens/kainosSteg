@@ -14,7 +14,7 @@ brew install python
 ### Pillow Image Library
 
 ```
-pip install Pillow
+pip3 install Pillow
 ```
 
 ### Installation Proof
